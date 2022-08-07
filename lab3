@@ -1,0 +1,265 @@
+#importing reqired libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import MinMaxScaler
+
+
+df = pd.read_csv("pima-indians-diabetes.csv" , usecols=['pregs','plas','pres','skin','test','BMI','pedi','Age'])
+filename = 'pima-indians-diabetes.csv'
+cols=['pregs','plas','pres','skin','test','BMI','pedi','Age']
+
+def outlierreplWithMedian(x):
+    q1 = df[x].quantile(0.25)
+    q3 = df[x].quantile(0.75)
+    iqr = q3 - q1
+    med = np.median(df[x])
+    for i in range(len(df[x])):
+        if df[x][i] < q1 - (1.5*iqr) or df[x][i]> q3 + 1.5*iqr:
+            df[x][i] = med
+
+for i in range(8):
+    outlierreplWithMedian(cols[i])
+
+old_min = df.min()
+old_max = df.max()
+
+df_min_max_scaled = df.copy()
+  
+# apply normalization techniques
+for column in df_min_max_scaled.columns:
+    df_min_max_scaled[column] = ((df_min_max_scaled[column] - df_min_max_scaled[column].min()) * 7 / (df_min_max_scaled[column].max() - df_min_max_scaled[column].min())) + 5  
+  
+# view normalized data
+print(df_min_max_scaled)
+
+#comparing the min and max
+
+new_min = df_min_max_scaled.min()
+new_max = df_min_max_scaled.max()
+
+print(old_min)
+print(old_max)
+print(new_min)
+print(new_max)
+#importing reqired libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import MinMaxScaler
+
+
+df = pd.read_csv("pima-indians-diabetes.csv" , usecols=['pregs','plas','pres','skin','test','BMI','pedi','Age'])
+filename = 'pima-indians-diabetes.csv'
+cols=['pregs','plas','pres','skin','test','BMI','pedi','Age']
+
+def outlierreplWithMedian(x):
+    q1 = df[x].quantile(0.25)
+    q3 = df[x].quantile(0.75)
+    iqr = q3 - q1
+    med = df[x].median()
+    for i in range(len(df[x])):
+        if df[x][i] < q1 - (1.5*iqr) or df[x][i]> q3 + 1.5*iqr:
+            df[x][i] = med
+
+for i in range(8):
+    outlierreplWithMedian(cols[i])
+
+old_mean = df.mean()
+old_stddev = df.std()
+
+# copy the data
+df_z_scaled = df.copy()
+  
+# apply normalization techniques
+for column in df_z_scaled.columns:
+    df_z_scaled[column] = (df_z_scaled[column] - df_z_scaled[column].mean()) / df_z_scaled[column].std()    
+  
+# view standardized data   
+print(df_z_scaled)
+
+new_mean = df_z_scaled.mean()
+new_stddev = df_z_scaled.std()
+
+#printing mean and std dev
+print(old_mean)
+print(old_stddev)
+print(new_mean)
+print(new_stddev)
+
+#importing reqired libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import multivariate_normal
+plt.style.use('seaborn-dark')
+plt.rcParams['figure.figsize']=14,6
+
+# Setting mean of the distributino to be at (0,0)
+mean = np.array([0,0]).T
+
+# Initializing the covariance matrix
+cov = np.array([[13,-3], [-3,5]])
+
+# Generating a Gaussian bivariate distribution with given mean and covariance matrix
+Distr = np.random.multivariate_normal(cov = cov, mean = mean, size=1000)
+Distr1 = np.random.multivariate_normal(cov = cov, mean = mean, size=1000).T
+#a
+# Plotting the generated samples
+plt.scatter(Distr[:,0],Distr[:,1])
+plt.title("Plot of 2D generated sythetic data")
+plt.xlabel('x1')
+plt.ylabel('x2')
+plt.show()
+
+#b
+evalue, eig_vecs = np.linalg.eig(cov) # computing Eigenvalues and Eigenvectors
+eig_vecs = eig_vecs.T  # Taking Transporse so that a "row" of eig_vecs is a eigenvector
+eig1 = eig_vecs[:,0]
+eig2 = eig_vecs[:,1]
+plt.quiver(*mean,*eig1,zorder=2)
+plt.quiver(*mean,*eig2,zorder=2)
+plt.scatter(Distr[:,0],Distr[:,1],zorder=1)
+plt.title("Plot of 2D synthetic data and Eigen directions")
+plt.show()
+
+
+#c
+first_X1=[]   #store all X1 coordinates of the projection along 1st eigenvector
+first_X2=[]   #store all X2 coordinates of the projection along 1st eigenvector
+
+for i in range(1000):   #iterating over all data
+    data_vec=Distr1[:,i]         #data_vec is a particular datavector from the generated samples
+    prj_mgn=data_vec.dot(eig_vecs[0])   #magnitude of projection along 1st eigenvector
+    prjcn_vec=prj_mgn*eig_vecs[0]   #projection vector(dircn along eign vector)
+    first_X1.append(prjcn_vec[0])
+    first_X2.append(prjcn_vec[1])     #Appending the components in the corresponding list
+
+plt.title('Projected values onto 1st eigen direction')
+plt.xlabel('x1');plt.ylabel('x2')
+plt.scatter(Distr1[0],Distr1[1],marker='.',color='blue')
+plt.quiver(0,0,eig_vecs[0][0],eig_vecs[0][1],angles="xy",color='red',scale=6)
+plt.quiver(0,0,eig_vecs[1][0],eig_vecs[1][1],angles='xy',color='red',scale=3)
+plt.scatter(first_X1,first_X2,color="orange",marker='x')  #Scattering the points of the projection along eigen vector
+plt.show()
+
+
+# Doing same for the projecttion along 2nd eigenvector
+Second_X1=[]   #Second_X1 will store all X1 coordinates of the projection along 2nd eigenvector
+Second_X2=[]   #Second_X2 will store all X2 coordinates of the projection along 2nd eigenvector
+
+for i in range(1000):   #iterating over all data
+    data_vec=Distr1[:,i]         #data_vec is a particular datavector from the generated samples
+    prj_mgn=data_vec.dot(eig_vecs[1])   #magnitude of projection along 2nd eigenvector
+    prjcn_vec=prj_mgn*eig_vecs[1]   #projection vector(dircn along eign vector)
+    Second_X1.append(prjcn_vec[0])
+    Second_X2.append(prjcn_vec[1])     #Appending the components in the corresponding list
+
+plt.title('Projected values onto 2nd eigen direction')
+plt.xlabel('x1');plt.ylabel('x2')
+plt.scatter(Distr1[0],Distr1[1],marker='.',color='blue')
+plt.quiver(0,0,eig_vecs[0][0],eig_vecs[0][1],angles="xy",color='red',scale=6)
+plt.quiver(0,0,eig_vecs[1][0],eig_vecs[1][1],angles='xy',color='red',scale=3)
+plt.scatter(Second_X1,Second_X2,color="orange",marker='x')  #Scattering the points of the projection along eigen vector
+plt.show()
+
+#d
+sqr_distance=0 #sqr_distance will store sum of square of distance of actual point from the reconstructed points.
+for i in range(1000):
+    data_vec=Distr1[:,i]
+    sqr_distance+=(data_vec[0]-first_X1[i]-Second_X1[i])**2+(data_vec[1]-first_X2[i]-Second_X2[i])**2  # sq distance is (Xactual-Xrecnstrcted)**2+(Yactual-Yrecnstrcted)**2
+mean_sqr_distance=sqr_distance/1000
+RMSE=mean_sqr_distance**(0.5)
+print("Reconstruction Error is: ",round(RMSE,3))
+
+
+#importing reqired libraries
+from functools import reduce
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
+from numpy import linalg as LA
+from sklearn.preprocessing import MinMaxScaler
+
+df = pd.read_csv("pima-indians-diabetes.csv" , usecols=['pregs','plas','pres','skin','test','BMI','pedi','Age'])
+filename = 'pima-indians-diabetes.csv'
+cols=['pregs','plas','pres','skin','test','BMI','pedi','Age']
+
+def outlierreplWithMedian(x):
+    q1 = df[x].quantile(0.25)
+    q3 = df[x].quantile(0.75)
+    iqr = q3 - q1
+    med = df[x].median()
+    for i in range(len(df[x])):
+        if df[x][i] < q1 - (1.5*iqr) or df[x][i]> q3 + 1.5*iqr:
+            df[x][i] = med
+
+for i in range(8):
+    outlierreplWithMedian(cols[i])
+
+# copy the data
+df_z_scaled = df.copy()
+  
+# apply normalization techniques
+for column in df_z_scaled.columns:
+    df_z_scaled[column] = (df_z_scaled[column] - df_z_scaled[column].mean()) / df_z_scaled[column].std()
+
+
+pca=PCA(n_components= 2) #creating PCA object with 2 components
+reduced_data=pca.fit_transform(df_z_scaled)    # the reduced dimensioned data
+
+#Now we need Eigenvalues
+cov_mat=np.cov(df_z_scaled.T)
+eigvals,vecs=np.linalg.eig(cov_mat)     #Computing and storing eigenvalues and eigenvecs of the Covariance matrix
+
+eigvals.sort()                      #Sorting and then reversing to get eigvals in decreasing order
+dcrsn_eigvals=eigvals[::-1]
+
+  
+#a
+for i in range(2):  #Comparing Variance along Principal components to corresponding eigen-values 
+    print('Variance along Eigen Vector',i+1,':',np.var(reduced_data.T[i]).round(3),
+    '\n\t\t Corresponding Eigenvalue :',dcrsn_eigvals[i].round(3),'\n')
+    
+#Plotting scatter plot of Reduced data
+plt.scatter(reduced_data[:,0],reduced_data[:,1],marker='x',color="blue")
+plt.title("Scatter Plot of Reduced dimensional Data")
+plt.xlabel("Principle Component #1")
+plt.ylabel("Principle Component #2")
+plt.show()
+
+#b Printing the Eigenvalues in decreasing order
+plt.figure(figsize=(6,5))
+vals = [1,2,3,4,5,6,7,8]
+plt.bar(vals,dcrsn_eigvals,color='maroon',width=0.6)
+plt.title("Eigen Values(decreasing order)")
+plt.xlabel("Index");plt.ylabel("Eigen_Value")
+plt.show()
+
+#c
+RMSEs=[]    #List to Store all RMSE values
+cols = ['x1','x2','x3','x4','x5','x6','x7','x8']
+for l in range(1,9): #Iterating over values of "L" from 1 to 7
+    pca=PCA(n_components=l)
+    reduced=pca.fit_transform(df_z_scaled) 
+    recnstrted=pca.inverse_transform(reduced) #recnstrted is the Reconstructed data from reduced data using inverse_transform method
+    if l!=1:
+        col = cols[0:l]
+        df1 = pd.DataFrame(data=reduced,columns=[col])
+        print("covariance matrix for l = ",l,":\n",df1.cov().round(3))
+    loss = LA.norm((df_z_scaled-recnstrted),None)
+    RMSEs.append(loss)
+
+#Plotting RMSE v/s L
+plt.figure(figsize=(6,6))
+plt.xlabel("Value of L")
+plt.ylabel("eucledian distance")
+plt.title("Reconstruction error of PCA")
+plt.bar(vals,RMSEs,color='maroon',width=0.55)
+plt.show()
+
+#d
+cov_original = pd.DataFrame(df_z_scaled.cov().T)
+with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
+    print("The covariance matrix of original data is\n", cov_original.round(3))
