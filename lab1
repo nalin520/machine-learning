@@ -1,0 +1,94 @@
+# name : nalin agarwal
+# roll no. : b20054
+# phone no. : 8968192140
+# branch : dse
+
+import pandas as pd
+import numpy as np
+data = pd.read_csv("pima-indians-diabetes.csv", usecols=['pregs','plas','pres','skin','test','BMI','pedi','Age'])
+print("mean of the asked attributes is: ")
+print(data.mean())
+print("mode of the asked attributes is: ")
+print(data.mode())
+print("median of the asked attributes is: ")
+print(data.median())
+print("minimum value of the asked attributes is: ")
+print(data.min())
+print("maximum value of the asked attributes is: ")
+print(data.max())
+print("standard deviation of the asked attributes is: ")
+print(data.std())
+
+
+import pandas as pd
+import matplotlib.pyplot as plt
+
+#a
+data = pd.read_csv("pima-indians-diabetes.csv", usecols=['pregs','plas','pres','skin','test','BMI','pedi','Age'])
+cols = data.columns
+for i in range(0,len(cols)):
+    plt.scatter(data['Age'],data[cols[i]])
+    plt.xlabel('Age')
+    plt.ylabel(cols[i])
+    plt.show()
+
+#b
+data = pd.read_csv("pima-indians-diabetes.csv", usecols=['pregs','plas','pres','skin','test','pedi','Age','BMI'])
+cols = data.columns
+for i in range(0,len(cols)):
+    plt.scatter(data['BMI'],data[cols[i]])
+    plt.xlabel('BMI')
+    plt.ylabel(cols[i])
+    plt.show()
+
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+
+data = pd.read_csv("pima-indians-diabetes.csv", usecols=['BMI','pregs','plas','pres','skin','test','pedi','Age'])
+
+for i in range(8):
+    cols=['pregs','plas','pres','skin','test','BMI','pedi','Age']
+    r = np.corrcoef(data['Age'],data[cols[i]])
+    print(r)
+
+for i in range(8):
+    cols=['pregs','plas','pres','skin','test','BMI','pedi','Age']
+    r = np.corrcoef(data['BMI'],data[cols[i]])
+    print(r)
+
+
+import matplotlib.pyplot as plt
+import pandas as pd
+data = pd.read_csv("pima-indians-diabetes.csv", usecols=['pregs','plas','pres','skin','test','BMI','pedi','Age'])
+plt.hist(data['pregs'])
+plt.show()
+plt.hist(data['skin'])
+plt.show()
+# name : nalin agarwal
+# roll no. : b20054
+# phone no. : 8968192140
+# branch : dse
+
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+data = pd.read_csv("pima-indians-diabetes.csv")
+
+
+plt.hist(data['pregs'][data['class'] == 0] ,bins = np.arange(0,20,1))
+plt.xticks(np.arange(0,20,1))
+plt.show()
+
+plt.hist(data['pregs'][data['class'] == 1],bins = np.arange(0,20,1))
+plt.xticks( np.arange(0,20,1))
+plt.show()
+
+import matplotlib.pyplot as plt
+import pandas as pd
+data = pd.read_csv("pima-indians-diabetes.csv", usecols=['pregs','plas','pres','skin','test','BMI','pedi','Age'])
+cols=['pregs','plas','pres','skin','test','BMI','pedi','Age']
+for i in range(len(cols)):
+    plt.boxplot(data[cols[i]])
+    plt.show()
