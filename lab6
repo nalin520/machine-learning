@@ -1,0 +1,211 @@
+#importing libraries
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy.stats import pearsonr
+from statsmodels.graphics.tsaplots import plot_acf
+#reading the data
+df = pd.read_csv('daily_covid_cases.csv')
+data = df.copy()
+#plotting the cases (a)
+plt.plot(range(len(df)),df['new_cases'])
+plt.xlabel('days')
+plt.ylabel('covid cases')
+plt.title('covid cases vs days')
+plt.show()
+
+#lagged time sequence (b)
+df['new_cases(t-1)'] = df['new_cases'].shift(1)
+df1 = df.dropna()
+#computing correlation
+corr = pearsonr(df1['new_cases'],df1['new_cases(t-1)'])[0].round(3)
+print('correlation coefficient : ',corr)
+
+#scatter plot (c)
+plt.scatter(df1['new_cases(t-1)'],df1['new_cases'],s=5,c='blue')
+plt.title('actual vs 1-day lagged')
+plt.xlabel('new_cases(t-1)')
+plt.ylabel('new_cases(t)')
+plt.show()
+
+#correlation for different lag values (d)
+corrs = []
+for i in range(1, 7):
+    data['new_cases(t-%i)'%i] = data['new_cases'].shift(i)
+    df2 = data.dropna()
+    corr= pearsonr(df2["new_cases"], df2["new_cases(t-%i)"%i])[0]
+    corrs.append(corr)
+print(corrs)
+
+#plotting correlation with lag-value line plot
+plt.plot(range(1,7),corrs,c='r')
+plt.title('lag vs correlation')
+plt.show()
+
+#generate acf plot (e)
+df = pd.read_csv('daily_covid_cases.csv')
+plot_acf(df.new_cases , lags=6)
+plt.show()
+
+#importing libraries
+import pandas as pd
+import matplotlib.pyplot as plt
+import math
+import numpy as np
+from pandas.core import indexing
+from statsmodels.tsa.ar_model import AutoReg as AR
+from sklearn.metrics import mean_squared_error
+
+series = pd.read_csv('daily_covid_cases.csv',parse_dates=['Date'],index_col=['Date'],sep=',')
+test_size = 0.35 # 35% for testing
+X = series.values
+tst_sz = math.ceil(len(X)*test_size)
+train, test = X[:len(X)-tst_sz], X[len(X)-tst_sz:]
+
+#coefficient of model (A)
+val_lag=5
+AR= AR(train,lags=val_lag,old_names=False)
+model_fit  = AR.fit() # fit/train the model
+coefficents = model_fit.params # Get the coefficients of AR model
+print("The coeficients for the auto regression model are :")
+print(coefficents)
+
+leng= len(train) #computing the length of train
+history= train[leng-val_lag:] 
+history=[history[i] for i in range(len(history))]
+pred=[]
+tst_len= len(test)
+for i in range(tst_len):  #iterating to get predictions of weights
+    length = len(history)
+    Lag = [history[j] for j in range(length-val_lag,length)] 
+    yhat = coefficents[0] 
+    for d in range(val_lag):
+      yhat += coefficents[d+1] * Lag[val_lag-d-1] 
+    obs = test[i]
+    pred.append(yhat) 
+    history.append(obs) 
+
+plt.xlabel('Predicted Values')
+plt.ylabel('Actual Values')
+plt.title('Actual vs Predicted values')
+plt.scatter(pred, test)
+plt.show()
+
+plt.title('line plot for Predicted and Actual values')
+plt.plot(test,label="Actual")
+plt.plot(pred,label="Predicted")
+plt.legend()
+plt.show()
+
+#computing RMSE
+rmse_per = (math.sqrt(mean_squared_error(test, pred))/np.mean(test))*100
+print('Root mean squared percentage error is:',rmse_per.round(4))
+
+#computing MAPE
+mape = (np.mean(np.abs((test - pred)/test)))*100
+print('MAPE between actual and predicted test data:',mape.round(4))
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import math
+from statsmodels.tsa.ar_model import AutoReg
+from sklearn.metrics import mean_squared_error
+lag_val = [1,5,10,15,25]
+RMSE_values=[]
+MAPE_values=[]
+
+series = pd.read_csv('daily_covid_cases.csv',parse_dates=['Date'],index_col=['Date'],sep=',')
+test_size = 0.35 # 35% for testing
+X = series.values
+tst_sz = math.ceil(len(X)*test_size)
+train, test = X[:len(X)-tst_sz], X[len(X)-tst_sz:]
+
+for p in lag_val:
+    
+    val=p
+    AR= AutoReg(train,lags=val,old_names=False)
+    model_fit = AR.fit() # fit/train the model
+    coefficents = model_fit.params # Get the coefficients of AR model
+    leng= len(train) 
+    his= train[leng-val:]
+    his=[his[i] for i in range(len(his))]
+    pred=[]
+    tst_len= len(test)
+
+    for i in range(tst_len):
+        length = len(his)
+        Lag = [his[j] for j in range(length-val,length)] 
+        yhat = coefficents[0]
+
+        for d in range(val):
+          yhat += coefficents[d+1] * Lag[val-d-1] 
+
+        obs = test[i]
+        pred.append(yhat) 
+        his.append(obs) 
+    rmse_per = (math.sqrt(mean_squared_error(test, pred))/np.mean(test))*100
+    print(f"Lag value : {p}")
+    print(f'Root mean squared percentage error for lag ={p} is:',rmse_per.round(4))
+    RMSE_values.append(rmse_per)
+    mape = (np.mean(np.abs((test - pred)/test)))*100
+    MAPE_values.append(mape)
+    print(f'MAPE between actual and predicted test data for lag={p} is:',mape.round(4),"\n")
+
+#for rmse values
+plt.bar([1,2,3,4,5],RMSE_values)
+plt.xticks([1,2,3,4,5],lag_val)
+plt.xlabel("time lag")
+plt.ylabel("Root Mean Squared percentage error")
+plt.title("Bar plot for RMSE vs Time Lag")
+plt.show()
+
+#for mape values
+plt.bar([1,2,3,4,5],MAPE_values)
+plt.xticks([1,2,3,4,5],lag_val)
+plt.xlabel("time lag")
+plt.title("Bar plot for MAPE vs Time Lag")
+plt.ylabel("MAPE")
+plt.show()
+import pandas as pd
+import numpy as np
+from scipy.stats.stats import pearsonr
+import math
+from statsmodels.tsa.ar_model import AutoReg
+from sklearn.metrics import mean_squared_error
+series = pd.read_csv('daily_covid_cases.csv',parse_dates=['Date'],index_col=['Date'],sep=',')
+test_size = 0.35 # 35% for testing
+X = series.values
+tst_sz = math.ceil(len(X)*test_size)
+train, test = X[:len(X)-tst_sz], X[len(X)-tst_sz:]
+
+p=1
+while p<(len(train)):
+    #Computing Pearson correlation b/w Actual and lagged data
+    corr=pearsonr(train[p:].ravel(), train[:(len(train)-p)].ravel())[0].round(3)
+    if(np.absolute(corr) <= 2/(len(train[p:]))**0.5):
+        print('The heuristic value is', p-1)
+        break
+    else:
+        p+=1
+val_lag=p-1 
+AR= AutoReg(train,lags=val_lag,old_names=False)
+model_fit = AR.fit() # fit/train the model
+coefficents = model_fit.params # Get the coefficients of AR model
+leng= len(train)
+history= train[leng-val_lag:]
+history=[history[i] for i in range(len(history))]
+pred=[]
+tst_len= len(test)
+for i in range(tst_len):
+    length = len(history)
+    Lag = [history[j] for j in range(length-val_lag,length)] 
+    yhat = coefficents[0] 
+    for d in range(val_lag):
+      yhat += coefficents[d+1] * Lag[val_lag-d-1] 
+    obs = test[i]
+    pred.append(yhat) 
+    history.append(obs) 
+rmse_per = (math.sqrt(mean_squared_error(test, pred))/np.mean(test))*100
+print(f'RMSE is:',rmse_per.round(4))
+mape = (np.mean(np.abs((test - pred)/test)))*100
+print(f'MAPE is:',mape.round(4),"\n")
