@@ -1,0 +1,202 @@
+# name : nalin agarwal
+# roll no. : b20054
+# phone no. : 8968192140
+# branch : dse
+
+import numpy as np 
+from matplotlib import pyplot as plt
+import pandas as pd
+
+df  = pd.read_csv("landslide_data3_miss.csv")
+
+plt.bar(df.columns,df.isnull().sum())
+
+plt.show()
+
+
+
+import numpy as np 
+from matplotlib import pyplot as plt
+import pandas as pd
+
+df  = pd.read_csv("landslide_data3_miss.csv")
+#a
+df2 = df.copy()
+stationid = df['stationid']
+
+df2.dropna(subset=['stationid'], inplace=True)
+print(df2.isnull().sum())
+print(df['stationid'].isnull().sum())
+
+#b
+arr_values = []
+
+for i in range(df2.shape[0]):
+    if(df2.iloc[i].isnull().sum() >= 3):
+        arr_values.append(i)
+
+data_new = df2.drop(arr_values)
+print(len(arr_values))
+print(data_new.isnull().sum().sum())
+
+
+import numpy as np 
+from matplotlib import pyplot as plt
+import pandas as pd
+
+df  = pd.read_csv("landslide_data3_miss.csv")
+
+#a
+df2 = df.copy()
+stationid = df['stationid']
+df2.dropna(subset=['stationid'], inplace=True)
+
+#b
+arr_values = []
+for i in range(df2.shape[0]):
+    if(df2.iloc[i].isnull().sum() >= 3):
+        arr_values.append(i)
+
+data_new = df2.drop(df2.index[arr_values])
+#3
+
+print(data_new.isnull().sum())
+print(data_new.isnull().sum().sum())
+
+import numpy as np 
+from matplotlib import pyplot as plt
+import pandas as pd
+
+df  = pd.read_csv("landslide_data3_miss.csv")
+df_original = pd.read_csv("landslide_data3_original.csv")
+df2 = df.copy()
+df2.dropna(subset=['stationid'], inplace=True)
+arr_values = []
+for i in range(df2.shape[0]):
+    if(df2.iloc[i].isnull().sum() >= 3):
+        arr_values.append(i)
+
+data_new = df2.drop(df2.index[arr_values])
+
+attributes = ['temperature', 'humidity', 'pressure', 'rain','lightavgw/o0', 'lightmax', 'moisture']
+
+print(data_new.isnull().sum())
+
+count_na=[]
+for i in range(7):
+    count_na.append(data_new[attributes[i]].isnull().sum())
+
+index = {}
+for i in range(7):
+    index[attributes[i]] = data_new[data_new[attributes[i]].isna()].index.tolist()
+data_new.fillna(data_new.mean(),inplace=True)
+list_rmse = []
+for i in range(7):
+    ans = 0
+    for j in range(0,count_na[i]):
+        ans+= (((data_new[attributes[i]].mean()) - df_original.loc[j,attributes[i]]) ** 2 )
+    list_rmse.append((ans/count_na[i]) ** 0.5)
+
+print("the properties for data_new is:","\nthe mean is",data_new.mean(),"\nthe median is",data_new.median(),"\nthe mode is", data_new.mode(),"\nthe std deviation is",data_new.std())
+print("the properties for df_original is:","\nthe mean is",df_original.mean(),"\nthe median is",df_original.median(), "\nthe mode is",df_original.mode(),"\nthe std deviation is",df_original.std())
+
+print(list_rmse)
+plt.bar(attributes,list_rmse)
+plt.yscale('log')
+plt.show()
+
+import numpy as np 
+from matplotlib import pyplot as plt
+import pandas as pd
+
+df  = pd.read_csv("landslide_data3_miss.csv")
+df_original = pd.read_csv("landslide_data3_original.csv")
+df2 = df.copy()
+df2.dropna(subset=['stationid'], inplace=True)
+arr_values = []
+for i in range(df2.shape[0]):
+    if(df2.iloc[i].isnull().sum() >= 3):
+        arr_values.append(i)
+data_new = df2.drop(df2.index[arr_values])
+
+print(data_new.isnull().sum())
+
+#a 2
+attributes = ['temperature', 'humidity', 'pressure', 'rain','lightavgw/o0', 'lightmax', 'moisture']
+
+count_na=[]
+for i in range(7):
+    count_na.append(data_new[attributes[i]].isnull().sum())
+
+index = {}
+for i in range(7):
+    index[attributes[i]] = data_new[data_new[attributes[i]].isna()].index.tolist()
+
+data_new = data_new.interpolate(method="linear")
+list_rmse = []
+for i in range(7):
+    ans = 0
+    for j in range(0,count_na[i]):
+        ans+= (((data_new[attributes[i]].mean()) - df_original.loc[j,attributes[i]]) ** 2 )
+    list_rmse.append((ans/count_na[i]) ** 0.5)
+
+print("the properties for data_new is:","\nthe mean is",data_new.mean(),"\nthe median is",data_new.median(),"\nthe mode is", data_new.mode(),"\nthe std deviation is",data_new.std())
+print("the properties for df_original is:","\nthe mean is",df_original.mean(),"\nthe median is",df_original.median(), "\nthe mode is",df_original.mode(),"\nthe std deviation is",df_original.std())
+print(list_rmse)
+plt.yscale('log')
+plt.bar(attributes,list_rmse)
+plt.show()
+
+
+import numpy as np 
+from matplotlib import pyplot as plt
+import pandas as pd
+
+df  = pd.read_csv("landslide_data3_miss.csv")
+df_original = pd.read_csv("landslide_data3_original.csv")
+
+data_new1 = df.interpolate(method="linear")
+
+def outliers(x):
+    q1 = data_new1[x].quantile(0.25)
+    q3 = data_new1[x].quantile(0.75)
+    iqr = q3 - q1
+
+    list_outlier = []
+    for i in range(len(data_new1[x])):
+        if data_new1[x][i] < q1 - (1.5*iqr) or data_new1[x][i]> q3 + 1.5*iqr:
+            list_outlier.append(i)
+    print("no. of outlier in 'x' : ", len(list_outlier))
+    plt.boxplot(data_new1[x])
+    plt.show()
+    print(iqr)
+
+outliers('temperature')
+outliers('rain')
+
+
+
+import numpy as np 
+from matplotlib import pyplot as plt
+import pandas as pd
+
+df  = pd.read_csv("landslide_data3_miss.csv")
+df_original = pd.read_csv("landslide_data3_original.csv")
+
+data_new1 = df.interpolate(method="linear")
+
+def outlierreplWithMedian(x):
+    q1 = data_new1[x].quantile(0.25)
+    q3 = data_new1[x].quantile(0.75)
+    iqr = q3 - q1
+    med = np.median(data_new1[x])
+    for i in range(len(data_new1[x])):
+        if data_new1[x][i] < q1 - (1.5*iqr) or data_new1[x][i]> q3 + 1.5*iqr:
+            data_new1[x][i] = med
+
+    plt.boxplot(data_new1[x])
+    plt.show()
+    print(iqr)
+
+outlierreplWithMedian('temperature')
+outlierreplWithMedian('rain')
