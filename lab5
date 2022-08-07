@@ -1,0 +1,360 @@
+# Nalin Agarwal, B20054, DSE branch
+#PART-A
+#Importing the libraries and functions
+from sklearn.mixture import GaussianMixture
+import numpy as np
+import pandas as pd
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score
+
+
+#Read the data and store as dataframe
+train_df=pd.read_csv('SteelPlateFaults-train.csv')
+test_df=pd.read_csv('SteelPlateFaults-test.csv')
+train_df.drop(['X_Minimum','Y_Minimum','TypeOfSteel_A300','TypeOfSteel_A400'],axis=1,inplace=True)
+test_df.drop(['X_Minimum','Y_Minimum','TypeOfSteel_A300','TypeOfSteel_A400'],axis=1,inplace=True)
+test_lbls=test_df.pop('Class')
+
+#Separate Class 1 for building its GMM
+train_cls_1=train_df[train_df['Class']==1]
+train_cls_1.pop('Class')
+#Separate Class 0
+train_cls_0=train_df[train_df['Class']==0]
+train_cls_0.pop('Class')
+
+#Computing the prior probablity of 2 classes
+prior0=train_cls_0.shape[0]/(train_cls_0.shape[0]+train_cls_1.shape[0])
+
+prior1=train_cls_1.shape[0]/(train_cls_0.shape[0]+train_cls_1.shape[0])
+
+#Building GMM for different values of q 
+Q_val=[2,4,8,16]
+for q in Q_val:
+    #fitting the model for class0 and class1 for Q=q
+    GMM0 = GaussianMixture(n_components=q,covariance_type='full',random_state=42,reg_covar=1e-4).fit(train_cls_0)
+    GMM1 = GaussianMixture(n_components=q,covariance_type='full',random_state=42,reg_covar=1e-4).fit(train_cls_1)
+    
+    clsfied=[] #List to store the predicted class of test sample
+    for _,tst_smpl in test_df.iterrows(): #Iterating over each test sample
+        loglklhood_0=GMM0.score_samples([tst_smpl])[0] #Computing likelihood probablity
+        loglklhood_1=GMM1.score_samples([tst_smpl])[0]
+        lklhood_0=np.exp(loglklhood_0)
+        lklhood_1=np.exp(loglklhood_1) #Computed likelihood of sample in each class
+
+        if(prior0*lklhood_0>prior1*lklhood_1):#If P(X/C0)*P(C0)> P(X/C1)*P(C1) means sample is of 0 class as per Bayes classifier
+            clsfied.append(0)
+        else:
+            clsfied.append(1)
+    
+    acc=(clsfied==test_lbls).sum()/(test_lbls.shape[0]) #Compute accuracy
+    print("\nfor q = %i: (acc:%.3f)"%(q,100*acc))
+    cnf_mtrx=confusion_matrix(clsfied,test_lbls) #Get the confusion matrix
+    cnf_mtrx =pd.DataFrame(cnf_mtrx,index=[0,1],columns=[0,1])
+    print(cnf_mtrx)
+#PART-B
+# Nalin Agarwal, B20054, DSE branch
+#Importing the libraries and functions
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+
+#Reading data 
+df=pd.read_csv('abalone.csv')
+
+X_train,X_test,X_label_train,X_label_test=train_test_split(df.iloc[:,:-1],df.iloc[:,-1] ,random_state=42,test_size=0.30)
+#Splitting the data with training data containing 70% example from each class
+#& Test data containng the rest 30% data from each class.(stratify set to True)   
+
+"""
+Q1.
+"""
+#[part(a)]
+
+
+train_data=X_train.copy()
+train_data['Rings']=X_label_train
+
+test_data=X_test.copy()
+test_data['Rings']=X_label_test
+
+train_data.to_csv("abalone-train.csv")
+test_data.to_csv("abalone-test.csv")
+
+#finding the attribute with highest correlation coefficient with rings
+crcf = []
+columns = train_data.columns
+
+for col in columns[:len(columns) - 1]:
+    crcf.append(np.corrcoef(train_data[col],train_data[columns[-1]])[0][1])
+max_value = max(crcf)
+max_index = crcf.index(max_value)
+res = columns[max_index]
+
+L_regressor=LinearRegression() #Creating linear regression object
+
+X_train = X_train[res].to_numpy()[..., np.newaxis]
+X_test = X_test[res].to_numpy()[..., np.newaxis]
+
+L_regressor.fit(X_train,X_label_train)  #Trained the regressor
+plt.scatter(X_train,X_label_train,color='blue',marker='.',label="Training Points") #Scatter plot of train data
+plt.plot(train_data[res], L_regressor.predict(X_train), label="Regression line", color = 'red')  #plotting predicted line
+plt.xlabel(res)
+plt.ylabel('Rings')
+plt.legend()
+plt.show()
+
+# Prediction RMSE       [part(b,c)]
+train_RMSE = mean_squared_error(X_label_train,L_regressor.predict(X_train))**(0.5)
+test_RMSE = mean_squared_error(X_label_test,L_regressor.predict(X_test))**(0.5)
+print("Train RMSE:", train_RMSE)
+print("Test RMSE:", test_RMSE)
+
+#[part(d)s]
+plt.title("Predicted Rings vs Actual Rings")
+plt.scatter(X_label_test, L_regressor.predict(X_test),marker='.')
+plt.xlabel("Actual Rings")
+plt.ylabel("Predicted Rings")
+plt.show()
+
+
+# Nalin Agarwal, B20054, DSE branch
+#Importing the libraries and functions
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.svm import SVC
+from sklearn.metrics import mean_squared_error
+from sklearn.preprocessing import PolynomialFeatures
+
+#Reading data 
+df=pd.read_csv('abalone.csv')
+
+X_train,X_test,X_label_train,X_label_test=train_test_split(df.iloc[:,:-1],df.iloc[:,-1] ,random_state=42,test_size=0.30)
+"""
+Q2
+"""
+cols = ['Length','Diameter','Height','Whole weight','Shucked weight','Viscera weight','Shell weight']
+
+L_regressor=LinearRegression() #Creating linear regression object
+
+L_regressor.fit(X_train,X_label_train)  #Trained the regressor
+# Prediction RMSE       [part(b,c)]
+train_RMSE = mean_squared_error(X_label_train,L_regressor.predict(X_train))**(0.5)
+test_RMSE = mean_squared_error(X_label_test,L_regressor.predict(X_test))**(0.5)
+print("Train RMSE:", train_RMSE)
+print("Test RMSE:", test_RMSE)
+
+#[part(d)]
+plt.title("Predicted Rings vs Actual Rings")
+plt.scatter(X_label_test, L_regressor.predict(X_test),marker='.',label= 'Training points')
+plt.xlabel("Actual Rings")
+plt.ylabel("Predicted Rings")
+plt.show()
+# Nalin Agarwal, B20054, DSE branch
+#Importing the libraries and functions
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+from sklearn.preprocessing import PolynomialFeatures
+
+#Reading data 
+df=pd.read_csv('abalone.csv')
+
+X_train,X_test,X_label_train,X_label_test=train_test_split(df.iloc[:,:-1],df.iloc[:,-1] ,random_state=42,test_size=0.30)
+#Splitting the data with training data containing 70% example from each class
+#& Test data containng the rest 30% data from each class.(stratify set to True)   
+
+
+#finding the attribute with highest correlation coefficient with rings
+train_data=X_train.copy()
+train_data['Rings']=X_label_train
+
+test_data=X_test.copy()
+test_data['Rings']=X_label_test
+crcf = []
+columns = train_data.columns
+
+for col in columns[:len(columns) - 1]:
+    crcf.append(np.corrcoef(train_data[col],train_data[columns[-1]])[0][1])
+max_value = max(crcf)
+max_index = crcf.index(max_value)
+res = columns[max_index]
+
+"""
+Q3
+"""
+
+train_RMSE = {}
+test_RMSE = {}  
+train_pred = {} 
+test_pred = {}  
+
+for p in [2,3,4,5]:
+    # Transforming X_train and X_test into their corresponding
+    # polynomial features
+    poly_feature = PolynomialFeatures(degree = p) # setting degree of polynomial
+    X_train_poly = poly_feature.fit_transform(X_train)
+    X_test_poly = poly_feature.transform(X_test)
+    
+    # Fitting linear regression on polynomial dataset
+    L_regressor = LinearRegression()    
+    L_regressor.fit(X_train_poly, X_label_train)
+    
+    # Making predictions
+    train_pred[p] =  L_regressor.predict(X_train_poly)
+    test_pred[p] =  L_regressor.predict(X_test_poly)
+    
+    # Calculating RMSE
+    train_RMSE[p] = mean_squared_error(X_label_train,train_pred[p])**(0.5)
+    test_RMSE[p] = mean_squared_error( X_label_test,test_pred[p])**(0.5)  
+
+# Plotting the RMSE values of training data       [part(a)]
+
+plt.title("RMSE values of training data for different P")
+x = [2,3,4,5]
+plt.xticks(x)
+plt.bar(x, train_RMSE.values(), width=0.2)
+plt.xlabel("P")
+plt.ylabel("RMSE")
+plt.show()
+# Repeating same for test data   [part(b)]
+plt.title("RMSE values of test data for different P")
+x = [2,3,4,5]
+plt.xticks(x)
+plt.bar(x, test_RMSE.values(), width=0.2)
+plt.xlabel("P")
+plt.ylabel("RMSE")
+plt.show()
+
+#Plot best fit curve on training data.    [part(c)]
+
+# Calculating value of p for which test accuracy is maximum.
+max_p = None    #variable to store best fit's p value
+min_RMSE = 1000000000       #variable to compare and get minimum RMSE value
+for p, RMSE in test_RMSE.items():
+    if min_RMSE>RMSE:
+        min_RMSE = RMSE
+        max_p = p
+#found the max_p , Now we need to plot the corresponding curve
+print("\nBest fit is found for p=",max_p)
+plt.title("p=4")
+plt.scatter(X_train[res], X_label_train)
+plt.scatter(X_train[res], train_pred[max_p], marker="x",color='red')
+plt.xlabel(res)
+plt.ylabel("Rings")
+plt.show()
+
+#Plot best fit curve on test_data         [part(d)]
+plt.title("Predicted Rings vs Actual Rings")
+plt.scatter(X_label_test, test_pred[max_p],marker='.')
+plt.xlabel("Actual Rings")
+plt.ylabel("Predicted Rings")
+plt.show()
+# Nalin Agarwal, B20054, DSE branch
+#Importing the libraries and functions
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.svm import SVC
+from sklearn.metrics import mean_squared_error
+from sklearn.preprocessing import PolynomialFeatures
+
+#Reading data 
+df=pd.read_csv('abalone.csv')
+
+X_train,X_test,X_label_train,X_label_test=train_test_split(df.iloc[:,:-1],df.iloc[:,-1] ,random_state=42,test_size=0.30)
+
+train_data=X_train.copy()
+train_data['Rings']=X_label_train
+
+test_data=X_test.copy()
+test_data['Rings']=X_label_test
+
+train_data.to_csv("abalone-train.csv")
+test_data.to_csv("abalone-test.csv")
+
+#finding the attribute with highest correlation coefficient with rings
+crcf = []
+columns = train_data.columns
+
+for col in columns[:len(columns) - 1]:
+    crcf.append(np.corrcoef(train_data[col],train_data[columns[-1]])[0][1])
+max_value = max(crcf)
+max_index = crcf.index(max_value)
+res = columns[max_index]
+
+L_regressor=LinearRegression() #Creating linear regression object
+
+"""
+Q4
+"""
+train_RMSE = {}
+test_RMSE = {}  
+train_pred = {} 
+test_pred = {}  
+
+for p in [2,3,4,5]:
+    # Transforming X_train and X_test into their corresponding
+    # polynomial features
+    poly_feature = PolynomialFeatures(degree = p) # setting degree of polynomial
+    X_train_poly = poly_feature.fit_transform(X_train)
+    X_test_poly = poly_feature.transform(X_test)
+    
+    # Fitting linear regression on polynomial dataset
+    L_regressor = LinearRegression()    
+    L_regressor.fit(X_train_poly, X_label_train)
+    
+    # Making predictions
+    train_pred[p] =  L_regressor.predict(X_train_poly)
+    test_pred[p] =  L_regressor.predict(X_test_poly)
+    
+    # Calculating RMSE
+    train_RMSE[p] = mean_squared_error(X_label_train,train_pred[p])**(0.5)
+    test_RMSE[p] = mean_squared_error( X_label_test,test_pred[p])**(0.5)  
+
+# Plotting the RMSE values of training data       [part(a)]
+
+plt.title("RMSE values of training data for different P")
+x = [2,3,4,5]
+plt.xticks(x)
+plt.bar(x, train_RMSE.values(), width=0.3)
+plt.xlabel("P")
+plt.ylabel("RMSE")
+plt.show()
+# Repeating same for test data   [part(b)]
+plt.title("RMSE values of test data for different P")
+x = [2,3,4,5]
+plt.xticks(x)
+plt.bar(x, test_RMSE.values(), width=0.3)
+plt.xlabel("P")
+plt.ylabel("RMSE")
+plt.show()
+
+# Calculating value of p for which test accuracy is maximum.
+max_p = None    #variable to store best fit's p value
+min_RMSE = 1000000000       #variable to compare and get minimum RMSE value
+for p, RMSE in test_RMSE.items():
+    if min_RMSE>RMSE:
+        min_RMSE = RMSE
+        max_p = p
+
+#Plot best fit curve on test_data         [part(c)]
+plt.title("Predicted Rings vs Actual Rings")
+plt.scatter(X_label_test, test_pred[max_p],marker='.')
+plt.xlabel("Actual Rings")
+plt.ylabel("Predicted Rings")
+plt.show()
